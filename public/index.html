@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD System</title>
+    <style>
+    
+        body {
+            font-family: 'Arial', sans-serif;
+            background-image: url('https://images.pexels.com/photos/1820770/pexels-photo-1820770.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=1');
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            color: #fff;
+            text-align: center;
+        }
+
+        .container {
+            width: 350px;
+            padding: 30px;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #4CAF50;
+            color: white;
+            font-size: 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-bottom: 10px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        p {
+            margin-top: 15px;
+            font-size: 14px;
+        }
+
+        a {
+            color: #4CAF50;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .container {
+                width: 90%;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="auth-container">
+        <h1>User Profile Management with CRUD Operations</h1>
+        <h2>Login</h2>
+        <input type="text" id="username" placeholder="Username" required>
+        <input type="password" id="password" placeholder="Password" required>
+        <button onclick="login()">Login</button>
+        <p>Don't have an account? <a href="#" onclick="showSignup()">Sign up</a></p>
+    </div>
+
+    <div class="container" id="signup-container" style="display: none;">
+        <h2>Sign Up</h2>
+        <input type="text" id="name" placeholder="Full Name" required>
+        <input type="text" id="signup-username" placeholder="Username" required>
+        <input type="password" id="signup-password" placeholder="Password" required>
+        <input type="text" id="signup-role" placeholder="Role (admin/user)" required>
+        <button onclick="signup()">Sign Up</button>
+        <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+    </div>
+
+    <div class="container" id="profile-container" style="display: none;">
+        <h2>Your Profile</h2>
+        <div id="profile-info"></div>
+        <button onclick="editProfile()">Edit Profile</button>
+        <button onclick="deleteProfile()">Delete Profile</button>
+        <button onclick="logout()">Logout</button>
+    </div>
+
+    <script>
+        let currentUserId = null;
+
+        function showSignup() {
+            document.getElementById('auth-container').style.display = 'none';
+            document.getElementById('signup-container').style.display = 'block';
+        }
+
+        function showLogin() {
+            document.getElementById('signup-container').style.display = 'none';
+            document.getElementById('auth-container').style.display = 'block';
+        }
+
+        async function signup() {
+            const name = document.getElementById('name').value;
+            const username = document.getElementById('signup-username').value;
+            const password = document.getElementById('signup-password').value;
+            const role = document.getElementById('signup-role').value;
+
+            const response = await fetch('http://localhost:3000/signup', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, username, password, role })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            if (response.ok) {
+                showLogin();
+            }
+        }
+
+        async function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const response = await fetch('http://localhost:3000/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+
+            if (response.ok) {
+                currentUserId = data.user.id;
+                showProfile();
+            }
+        }
+
+        async function showProfile() {
+            const response = await fetch(`http://localhost:3000/profile?userId=${currentUserId}`);
+            const data = await response.json();
+
+            if (response.ok) {
+                document.getElementById('profile-info').innerHTML = ` 
+                    <p><strong>Name:</strong> ${data.name}</p>
+                    <p><strong>Username:</strong> ${data.username}</p>
+                    <p><strong>Role:</strong> ${data.role}</p>
+                `;
+                document.getElementById('profile-container').style.display = 'block';
+                document.getElementById('auth-container').style.display = 'none';
+            }
+        }
+
+        async function editProfile() {
+            const name = prompt("Enter new name");
+            const username = prompt("Enter new username");
+            const password = prompt("Enter new password");
+            const role = prompt("Enter new role");
+
+            const response = await fetch('http://localhost:3000/profile', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId, name, username, password, role })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            if (response.ok) {
+                showProfile();
+            }
+        }
+
+        async function deleteProfile() {
+            const response = await fetch('http://localhost:3000/profile', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: currentUserId })
+            });
+
+            const data = await response.json();
+            alert(data.message);
+            if (response.ok) {
+                currentUserId = null;
+                showLogin();
+            }
+        }
+
+        function logout() {
+            currentUserId = null;
+            showLogin();
+        }
+    </script>
+</body>
+</html>
